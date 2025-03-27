@@ -1,97 +1,63 @@
-import numpy as np
+import numpy as np 
+from scipy.sparse import csc_matrix
+from scipy.sparse.linalg import spsolve
+import funcFlu
 
-# Pas de la discretisation
-h = 1
+# conditions aux limites du cas 1
+cl = np.loadtxt("CL/1-cl.txt", dtype = float)
 
-def getCoeff(num_left, num_right, num_down, num_up, num_cent, type_cent, cl_cent):
+def solver(dom, num):
+
+    # nbr de noeuds a calculer
+    non_zero = np.count_nonzero(dom)
+
+    # taille du systeme etudiee
+    rows, cols = dom.shape
+
+    # initialisation des vecteurs a mettre dans la sparse matrix
+    dataSparse = []
+    rowSparse = []
+    colSparse = []
+    b = np.zeros((non_zero))
+
+    # itere sur chaque noeud
+    for i in range(rows):
+        for j in range(cols):
+
+            # donnees du noeud central
+            nodeType = dom[i, j]
+            nodeNum = num[i, j]
+
+            # si pas dans le domaine, on passe au suivant
+            if nodeType == 0:
+                continue
+
+            # appel a getCoeff
+            numNoeuds, listeCoeff, valB = funcFlu.getCoeff(num[i, j-1], num[i, j+1], num[i+1, j], num[i-1, j], nodeNum, nodeType, cl[i, j]) 
+
+            # getCoeff retourne les valeurs selon 3 cas, l'un des cas est elimine par le if nodeType == 0
+            nbrCoeff = len(listeCoeff)
+
+            # Nœud de Dirichlet, cas 1
+            if nbrCoeff == 1: 
+                dataSparse.append(listeCoeff[0])
+                rowSparse.append(nodeNum - 1)
+                colSparse.append(numNoeuds[0] - 1)
+
+            # noeud normal, cas 2
+            else: 
+                for k in range(5):
+                    dataSparse.append(listeCoeff[k, 0])
+                    rowSparse.append(nodeNum - 1)
+                    colSparse.append(numNoeuds[k, 0] - 1)
+
+            # on place la valeur de la condition limite (on doit aller de 0 a nbrNoeuds - 1)
+            b[nodeNum - 1] = valB
     
-    if type_cent == 0:  # Nœud hors domaine
-        j = np.array([]) 
-        a = np.array([]) 
-        b = 0
-    
-    elif type_cent == 1:  # Nœud intérieur
-        coeff = 1 / (h ** 2)
-        j = np.array([num_left, num_right, num_down, num_up, num_cent]).reshape(-1, 1)
-        a = np.array([coeff, coeff, coeff, coeff, -4 * coeff]).reshape(-1, 1).astype(int)
-        b = 0  # Pas de terme source explicite
+    # on construit la matrice creuse
+    A = csc_matrix((dataSparse, (rowSparse, colSparse)), shape=(non_zero, non_zero))
 
-    elif type_cent == 2:  # Nœud de Dirichlet
-        j = np.array([num_cent])
-        a = np.array([1])
-        b = cl_cent  # La valeur de la condition de Dirichlet
+    # on resout le systeme
+    psi = spsolve(A, b)
 
-    return j,a,b
-
-def deriv(f_left, f_c, f_right, type_left, type_c, type_right, h):
-
-    # Si le centre n'est pas dans le domaine, v = 0
-    if type_c == 0:
-        return 0.0
-
-    # Les deux voisins sont valides
-    if type_left in (1, 2) and type_right in (1, 2):
-        return (f_right - f_left) / (2 * h)
-
-    # Seulement le point à gauche
-    if type_left in (1, 2) and type_right == 0:
-        return (f_c - f_left) / h
-
-    # Seulement le point à droite
-    if type_right in (1, 2) and type_left == 0:
-        return (f_right - f_c) / h
-
-    # Aucun voisin n’est utilisable
-    return 0.0
-
-def circu(u, v, x, y):
-
-    # Longuer de la courbe de circulation (nbr noeuds)
-    lengthCourbe = len(x) - 1
-
-    # Initialisation des var
-    c = 0.0
-
-    # Etant une courbe fermee, le dernier noeud est le 1er (range vas de 0 a lengthCourbe - 1)
-    for i in range(lengthCourbe):
-        # Calcule la variation d'un noeud a  un noeud
-        dx = x[i + 1] - x[i]
-        dy = y[i + 1] - y[i]
-        
-        # Si dx = 0 on est sur une paroi verticale -> formule trapezoidale pour l'integrale
-        if dx == 0:
-            c = c + (v[i] + v[i+1])*dy/2
-
-        # Si dy = 0 la paroi est horizontale
-        if dy == 0:
-            c = c + (u[i] + u[i+1])*dx/2
-
-    return c
-
-def force(p,x,y):
-
-    # Longuer de la courbe de circulation (nbr noeuds)
-    lengthCourbe = len(x) - 1
-
-    # Initialisation des var
-    fx = 0.0
-    fy = 0.0
-
-    # Etant une courbe fermee, le dernier noeud est le 1er (range vas de 0 a lengthCourbe - 1)
-    for i in range(lengthCourbe):
-        # Calcule la variation d'un noeud a  un noeud
-        dx = x[i + 1] - x[i]
-        dy = y[i + 1] - y[i]
-        
-        # la paroi est verticale
-        if dx == 0:
-            # on parcour la coube "aire a droite" donc si on monte la pression pointe vers la droite
-            # et si on descends p pointe vers la gauche. La drection est contenu dans le signe de dy
-            fx = fx + (p[i] + p[i+1])*dy/2
-
-        # la paroi est horizontale
-        if dy == 0:    
-            # si on vas vers la droite p pointe vers le bas (-x)
-            fy = fy - (p[i] + p[i+1])*dx/2
-
-    return fx, fy
+    return psi
