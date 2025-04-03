@@ -3,10 +3,7 @@ from scipy.sparse import csc_matrix
 from scipy.sparse.linalg import spsolve
 import funcFlu
 
-# conditions aux limites du cas 1
-cl = np.loadtxt("CL/1-cl.txt", dtype = float)
-
-def solver(dom, num):
+def solver(dom, num, cl):
 
     # nbr de noeuds a calculer
     non_zero = np.count_nonzero(dom)
@@ -58,6 +55,17 @@ def solver(dom, num):
     A = csc_matrix((dataSparse, (rowSparse, colSparse)), shape=(non_zero, non_zero))
 
     # on resout le systeme
-    psi = spsolve(A, b)
+    psiVect = spsolve(A, b)
 
-    return psi
+    # transformation de psi en une matrice
+    psiMat = np.zeros((rows, cols))
+
+    for i in range(rows):
+        for j in range(cols):
+
+            if dom[i, j] == 0:
+                continue
+
+            psiMat[i, j] = psiVect[num[i, j] - 1]
+
+    return psiMat

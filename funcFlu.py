@@ -1,8 +1,5 @@
 import numpy as np
 
-# Pas de la discretisation
-h = 1
-
 def getCoeff(num_left, num_right, num_down, num_up, num_cent, type_cent, cl_cent):
     
     if type_cent == 0:  # Nœud hors domaine
@@ -11,9 +8,8 @@ def getCoeff(num_left, num_right, num_down, num_up, num_cent, type_cent, cl_cent
         b = 0
     
     elif type_cent == 1:  # Nœud intérieur
-        coeff = 1 / (h ** 2)
         j = np.array([num_left, num_right, num_down, num_up, num_cent]).reshape(-1, 1)
-        a = np.array([coeff, coeff, coeff, coeff, -4 * coeff]).reshape(-1, 1).astype(int)
+        a = np.array([1, 1, 1, 1, -4]).reshape(-1, 1).astype(int)
         b = 0  # Pas de terme source explicite
 
     elif type_cent == 2:  # Nœud de Dirichlet
@@ -68,13 +64,52 @@ def circu(u, v, x, y):
 
     return c
 
-def velocity(phi, dom, h):
+def velocity(psi, dom, h):
 
-    v = 0.0
+    # ini des var (v est ndim = 3)
+    rows, cols = psi.shape
+    v = np.zeros((rows, cols, 2))
+   
+    # deriver phi par rapport a x et y
+    for i in range(rows):
+        for j in range(cols):
+            
+            if dom[i, j] == 0:
+                continue
 
-    
+            # calcul des derivees selon x et y
+            dpsidx = deriv(psi[i, j-1], psi[i, j], psi[i, j+1], dom[i, j-1], dom[i, j], dom[i, j+1], h)
+            dpsidy = deriv(psi[i+1, j], psi[i, j], psi[i-1, j], dom[i+1, j], dom[i, j], dom[i-1, j], h)
+
+            v[i, j, 0] = dpsidy
+            v[i, j, 1] = -dpsidx
 
     return v
+
+def pressure(v, dom, const):
+
+    # cosntantes
+    rho = 1000
+    g = 9.81
+
+    # initialisation des variables
+    rows, cols = dom.shape
+    pres = np.zeros((rows, cols))
+
+    # vitesse absolue
+    for i in range(rows):
+        for j in range(cols):
+
+            if dom[i, j] == 0:
+                continue
+
+            # vitesse absolue
+            aux = np.square(v[i, j, 0]) + np.square(v[i, j, 1])
+            vAbs = np.sqrt(aux)
+
+            pres[i, j] = rho*g*(const - np.square(vAbs)/(2*g))
+
+    return pres
 
 def force(p,x,y):
 
