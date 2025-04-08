@@ -4,7 +4,6 @@ from scipy.sparse.linalg import spsolve
 import funcFlu
 
 def solver(dom, num, cl):
-
     # nbr de noeuds a calculer
     non_zero = np.count_nonzero(dom)
 

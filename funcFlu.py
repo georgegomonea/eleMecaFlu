@@ -77,9 +77,9 @@ def velocity(psi, dom, h):
             if dom[i, j] == 0:
                 continue
 
-            # calcul des derivees selon x et y
-            dpsidx = deriv(psi[i, j-1], psi[i, j], psi[i, j+1], dom[i, j-1], dom[i, j], dom[i, j+1], h)
-            dpsidy = deriv(psi[i+1, j], psi[i, j], psi[i-1, j], dom[i+1, j], dom[i, j], dom[i-1, j], h)
+            # calcul des derivees selon x et y (x est selon i et y selon j)
+            dpsidx = deriv(psi[i-1, j], psi[i, j], psi[i+1, j], dom[i-1, j], dom[i, j], dom[i+1, j], h)
+            dpsidy = deriv(psi[i, j-1], psi[i, j], psi[i, j+1], dom[i, j-1], dom[i, j], dom[i, j+1], h)
 
             v[i, j, 0] = dpsidy
             v[i, j, 1] = -dpsidx
