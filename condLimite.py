@@ -22,7 +22,7 @@ def findNextNode(i0, j0, oldi, oldj, cl):
     return None
 
 # change les valeures des conditions limites de dietricht
-def createCl():
+def createCl(rap, pasDiscret):
 
     # je charge les donnees existantes
     cl = np.loadtxt("CL/2-dom.txt", dtype = float)
@@ -38,17 +38,13 @@ def createCl():
     # formule issue de l'enonce
     debitTotal = (10*X + 5*Y)*0.001
 
-    # 21 noeuds pour le gros et 7 pour le cordon vertical et 8 pour le cordon horizontal
-    # l'epaisseur est unitaire donc A = 20*pasDiscret qui est de 1cm
+    # l'epaisseur est unitaire 
     # la sortie et l'entree ont une largeur de 21 points de discretisation
-    pasDiscret = 0.01
-    aireTotale = (21 - 1) * pasDiscret
-    aireObstVerti = (7 - 1) * pasDiscret
-    aireObstHori = (8 - 1) * pasDiscret
+    aireTotale = 21 * pasDiscret
+    aireObstVerti = 7 * pasDiscret
+    aireObstHori = 8 * pasDiscret
 
-    # rapport entre Vin1 et Vout (0.5 pour le cas 1 et 0.7 pour le cas 2)
-    rap = 0.5
-
+    # calcul de la vitese de sortie et d'entree
     Vout = debitTotal / aireTotale
     Vin1 = rap * Vout
     Vin2 = (1 - rap) * Vout
@@ -67,7 +63,7 @@ def createCl():
     row, col = 1, 1
 
     # valIni est la valeure arbitraire de depart pour les conditions limites
-    valIni = 0.5
+    valIni = 1
     valCl = valIni
 
     # valeures limites des murs
@@ -110,42 +106,40 @@ def createCl():
         if row == 99 and col in range(79, 100):
             valCl = valCl + Vin2 * pasDiscret
         
+        # remet a 0 pour finir le contour avec la cl initiale
         if row == 99 and col == 79:
             valCl = valIni
 
+        # place la cl choisie
         cl[row, col] = valCl
 
-    # nbr de noeuds qui englobent l'obstacle
-    rowObj, _ = contourObj.shape
-
-    # valeures des cl sur l'obstacle
-    clVertGauche = (Vverti * aireObstVerti) + clGauche
+    # valeures des cl sur l'obstacle (toutes sont egales sauf pour le sommet)
+    clVertGauche = clGauche + (Vverti * aireObstVerti)
     clVertDroite = clDroite - (Vverti * aireObstVerti)
-
     clHoriGauche = clGauche + (Vhoribas * aireObstHori)
     clHoriDroite = clDroite - (Vhoribas * aireObstHori)
 
     clHoriHaut = clHaut - (Vhorihaut * aireObstHori)
 
+    # nbr de noeuds qui englobent l'obstacle
+    rowObj, _ = contourObj.shape
+
     # on va de noeud en noeud jusqu'a n-2 car on calcule la derivee, donc on utilise i et i+1, et le dernier noeud et aussi le premier
     for i in range(rowObj - 1):
-
+        # on trouve les coordonees
         row = contourObj[i, 0]
         col = contourObj[i, 1]
 
+        # sommet du T
         if col == 92:
             cl[row, col] = clHoriHaut
             continue
-
-        cl[row, col] = clVertGauche
-
-
-
         
-   
-
+        # toutes les autres cl sont egales
+        cl[row, col] = clVertGauche
 
     # on sauve le changement
     np.savetxt("CL/2-cl.txt", cl, fmt='%6.3f')
 
-createCl()
+    # la valeur de la vitesse est utile pour le calcul de la constante de pression
+    return Vout
