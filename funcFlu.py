@@ -1,7 +1,6 @@
 import numpy as np
 
 def getCoeff(num_left, num_right, num_down, num_up, num_cent, type_cent, cl_cent):
-    
     if type_cent == 0:  # Nœud hors domaine
         j = np.array([]) 
         a = np.array([]) 
@@ -20,7 +19,6 @@ def getCoeff(num_left, num_right, num_down, num_up, num_cent, type_cent, cl_cent
     return j,a,b
 
 def deriv(f_left, f_c, f_right, type_left, type_c, type_right, h):
-
     # Si le centre n'est pas dans le domaine, v = 0
     if type_c == 0:
         return 0.0
@@ -41,7 +39,6 @@ def deriv(f_left, f_c, f_right, type_left, type_c, type_right, h):
     return 0.0
 
 def circu(u, v, x, y):
-
     # Longuer de la courbe de circulation (nbr noeuds)
     lengthCourbe = len(x) - 1
 
@@ -65,7 +62,6 @@ def circu(u, v, x, y):
     return c
 
 def velocity(psi, dom, h):
-
     # ini des var (v est ndim = 3)
     rows, cols = psi.shape
     v = np.zeros((rows, cols, 2))
@@ -87,7 +83,6 @@ def velocity(psi, dom, h):
     return v
 
 def pressure(v, dom, const):
-
     # cosntantes
     rho = 1000
     g = 9.81
@@ -112,7 +107,6 @@ def pressure(v, dom, const):
     return pres
 
 def force(p,x,y):
-
     # Longuer de la courbe de circulation (nbr noeuds)
     lengthCourbe = len(x) - 1
 
