@@ -41,13 +41,17 @@ def createCl(rap, pasDiscret):
     # l'epaisseur est unitaire 
     # la sortie et l'entree ont une largeur de 21 points de discretisation
     aireTotale = 21 * pasDiscret
-    aireObstVerti = 7 * pasDiscret
-    aireObstHori = 8 * pasDiscret
+    aireObstVerti = 8 * pasDiscret
+    aireObstHori = 7 * pasDiscret
 
     # calcul de la vitese de sortie et d'entree
     Vout = debitTotal / aireTotale
     Vin1 = rap * Vout
     Vin2 = (1 - rap) * Vout
+
+    # debits
+    Qin1 = Vin1 * aireTotale
+    Qin2 = Vin2 * aireTotale
     
     # debit est reparti uniformement de cote et d'autre de l'obstacle vertical
     # Vverti est la vitesse moyenne sur le cote vertical de l'obstacle 
@@ -57,7 +61,12 @@ def createCl(rap, pasDiscret):
 
     # si les debits d'entree sont differents, une partie sera envoie de l'atre cote pour que le debit vertical soit le meme
     # vitesse sur la branche superieure du T
-    Vhorihaut = (aireTotale * Vin1) / aireObstHori - Vhoribas
+    Vhorihaut = (Qin1 - debitTotal/2)/aireObstVerti
+
+    Qegal = Vhorihaut * aireObstVerti
+    
+    print(Vin1, Vin2, Vhorihaut, Vout)
+    print(Qin1, Qin2, Qegal, debitTotal)
 
     # le contour, c'est tout les autres point qui sont egaux a deux, on va commencer en 1 1
     row, col = 1, 1

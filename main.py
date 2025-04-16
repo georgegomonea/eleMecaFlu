@@ -12,7 +12,7 @@ contourObj = np.loadtxt("CL/2-contourObj.txt", dtype = int)
 
 # donnees
 # rapport entre Vin1 et Vout
-raportV = 0.5
+raportV = 0.7
 pasDiscret = 0.01 # m
 rows, cols = dom.shape
 
@@ -273,3 +273,6 @@ def plotVlinesPress():
     plt.axis('equal')
     plt.grid(False)
     plt.show()
+
+
+plotVlinesPress()
