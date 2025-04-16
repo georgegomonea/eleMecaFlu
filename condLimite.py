@@ -63,11 +63,6 @@ def createCl(rap, pasDiscret):
     # vitesse sur la branche superieure du T
     Vhorihaut = (Qin1 - debitTotal/2)/aireObstVerti
 
-    Qegal = Vhorihaut * aireObstVerti
-    
-    print(Vin1, Vin2, Vhorihaut, Vout)
-    print(Qin1, Qin2, Qegal, debitTotal)
-
     # le contour, c'est tout les autres point qui sont egaux a deux, on va commencer en 1 1
     row, col = 1, 1
 
